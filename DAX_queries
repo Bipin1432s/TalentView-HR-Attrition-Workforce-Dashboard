@@ -1,0 +1,106 @@
+-- PAGE 1 : EXECUTIVE SUMMARY
+DEFINE
+
+    MEASURE employee_attrition_cleaned[Total Employees] =
+        COUNT(employee_attrition_cleaned[age])
+
+    MEASURE employee_attrition_cleaned[Attrition Count] =
+        CALCULATE(
+            COUNT(employee_attrition_cleaned[attrition]),
+            employee_attrition_cleaned[attrition] = "yes"
+        )
+
+    MEASURE employee_attrition_cleaned[Employees Stayed] =
+        CALCULATE(
+            COUNT(employee_attrition_cleaned[attrition]),
+            employee_attrition_cleaned[attrition] = "no"
+        )
+
+    MEASURE employee_attrition_cleaned[Attrition Rate (%)] =
+        DIVIDE(
+            [Attrition Count],
+            [Total Employees],
+            0
+        ) * 100
+
+    MEASURE employee_attrition_cleaned[Avg Monthly Income] =
+        AVERAGE(employee_attrition_cleaned[MonthlyIncome])
+
+    MEASURE employee_attrition_cleaned[Avg Tenure] =
+        AVERAGE(employee_attrition_cleaned[YearsAtCompany])
+
+    MEASURE employee_attrition_cleaned[Overtime %] =
+        DIVIDE(
+            CALCULATE(
+                COUNT(employee_attrition_cleaned[overtime]),
+                employee_attrition_cleaned[overtime] = "yes"
+            ),
+            [Total Employees],
+            0
+        ) * 100
+
+-- PAGE 2 : ATTRITION DRIVERS
+
+    MEASURE employee_attrition_cleaned[Attrition Rate by Category (%)] =
+        DIVIDE(
+            CALCULATE(
+                COUNT(employee_attrition_cleaned[attrition]),
+                employee_attrition_cleaned[attrition] = "yes"
+            ),
+            COUNT(employee_attrition_cleaned[attrition]),
+            0
+        ) * 100
+
+    MEASURE employee_attrition_cleaned[Avg Income (Attrited)] =
+        CALCULATE(
+            AVERAGE(employee_attrition_cleaned[MonthlyIncome]),
+            employee_attrition_cleaned[attrition] = "yes"
+        )
+
+    MEASURE employee_attrition_cleaned[Avg Income (Retained)] =
+        CALCULATE(
+            AVERAGE(employee_attrition_cleaned[MonthlyIncome]),
+            employee_attrition_cleaned[attrition] = "no"
+        )
+
+    MEASURE employee_attrition_cleaned[Avg Tenure (Attrited)] =
+        CALCULATE(
+            AVERAGE(employee_attrition_cleaned[YearsAtCompany]),
+            employee_attrition_cleaned[attrition] = "yes"
+        )
+
+    MEASURE employee_attrition_cleaned[Avg Tenure (Retained)] =
+        CALCULATE(
+            AVERAGE(employee_attrition_cleaned[YearsAtCompany]),
+            employee_attrition_cleaned[attrition] = "no"
+        )
+
+-- PAGE 3 : HR RISK & ACTION
+
+    MEASURE employee_attrition_cleaned[Income Gap] =
+        [Avg Income (Retained)] - [Avg Income (Attrited)]
+
+    MEASURE employee_attrition_cleaned[Tenure Gap] =
+        [Avg Tenure (Retained)] - [Avg Tenure (Attrited)]
+
+    MEASURE employee_attrition_cleaned[High Attrition Flag] =
+        IF(
+            [Attrition Rate by Category (%)] > 20,
+            "High Risk",
+            "Normal"
+        )
+
+    MEASURE employee_attrition_cleaned[Attrition Risk Score] =
+        IF(
+            SELECTEDVALUE(employee_attrition_cleaned[overtime]) = "yes"
+                && SELECTEDVALUE(employee_attrition_cleaned[MonthlyIncome]) < 3000,
+            "High",
+            "Medium"
+        )
+
+-- OUTPUT (TEST PURPOSE)
+EVALUATE
+    ROW(
+        "Total Employees", [Total Employees],
+        "Attrition Rate (%)", [Attrition Rate (%)]
+    )
